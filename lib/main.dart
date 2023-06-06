@@ -37,7 +37,7 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
 
     try {
       Response response = await Dio().post(
-        'http://localhost:8080/api/adicionar-item',
+        'http://localhost:8080/api/adicionaritem',
         data: {
           'nome': item.nome,
           'valor': item.valor,
@@ -61,7 +61,7 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
 
     try {
       Response response = await Dio().post(
-        'http://localhost:8080/api/remover-item',
+        'http://localhost:8080/api/removeritem',
         data: {
           'nome': item.nome,
           'valor': item.valor,
