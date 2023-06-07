@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:http/http.dart' as http;
 
 import 'model/Item.dart';
 
@@ -25,6 +26,52 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
   bool _isLoading = false;
   TextEditingController _nomeController = TextEditingController();
   TextEditingController _valorController = TextEditingController();
+  TextEditingController _imageUrlController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _getAllItens();
+  }
+
+  Future<void> _getAllItens() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      Response response = await Dio().get('http://localhost:8080/api/itens');
+      List<dynamic> data = response.data;
+
+      List<Item> itens = [];
+      double total = 0;
+
+      for (dynamic itemData in data) {
+        if (itemData['nome'] != null &&
+            itemData['valor'] != null &&
+            itemData['imageUrl'] != null) {
+          Item item = Item(
+            nome: itemData['nome'],
+            valor: itemData['valor'].toDouble(),
+            imageUrl: itemData['imageUrl'],
+          );
+          itens.add(item);
+          total += item.valor;
+        }
+      }
+
+      setState(() {
+        _carrinho = itens;
+        _total = total;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erro ao obter itens: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _adicionarItem(Item item) async {
     setState(() {
@@ -32,15 +79,13 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
       _total += item.valor;
     });
 
-    // Chame a API Java para adicionar o item ao banco de dados
-    // Use a biblioteca Dio para fazer a requisição HTTP
-
     try {
       Response response = await Dio().post(
         'http://localhost:8080/api/adicionaritem',
         data: {
           'nome': item.nome,
           'valor': item.valor,
+          'imageUrl': item.imageUrl,
         },
       );
 
@@ -56,15 +101,13 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
       _total -= item.valor;
     });
 
-    // Chame a API Java para remover o item do banco de dados
-    // Use a biblioteca Dio para fazer a requisição HTTP
-
     try {
-      Response response = await Dio().post(
+      Response response = await Dio().delete(
         'http://localhost:8080/api/removeritem',
         data: {
           'nome': item.nome,
           'valor': item.valor,
+          'imageUrl': item.imageUrl,
         },
       );
 
@@ -72,6 +115,7 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
     } catch (e) {
       print('Erro ao remover item: $e');
     }
+
   }
 
   Future<void> _exibirDialogoAdicionarItem() async {
@@ -96,6 +140,12 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
                 ),
                 keyboardType: TextInputType.number,
               ),
+              TextField(
+                controller: _imageUrlController,
+                decoration: InputDecoration(
+                  labelText: 'URL da imagem',
+                ),
+              ),
             ],
           ),
           actions: [
@@ -109,10 +159,15 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
               onPressed: () {
                 String nome = _nomeController.text.trim();
                 String valorText = _valorController.text.trim();
+                String imageUrl = _imageUrlController.text.trim();
                 double valor = double.tryParse(valorText) ?? 0.0;
 
                 if (nome.isNotEmpty && valor > 0) {
-                  Item item = Item(nome: nome, valor: valor, imageUrl: '');
+                  Item item = Item(
+                    nome: nome,
+                    valor: valor,
+                    imageUrl: imageUrl,
+                  );
                   _adicionarItem(item);
                 }
 
@@ -135,7 +190,11 @@ class _CarrinhoComprasAppState extends State<CarrinhoComprasApp> {
       body: Column(
         children: <Widget>[
           Expanded(
-            child: _carrinho.isNotEmpty
+            child: _isLoading
+                ? Center(
+              child: CircularProgressIndicator(),
+            )
+                : _carrinho.isNotEmpty
                 ? ListView.builder(
               itemCount: _carrinho.length,
               itemBuilder: (context, index) {
