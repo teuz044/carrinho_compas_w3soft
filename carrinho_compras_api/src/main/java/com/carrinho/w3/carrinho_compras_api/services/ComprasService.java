@@ -5,14 +5,21 @@ import com.carrinho.w3.carrinho_compras_api.repository.ComprasRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ComprasService {
 
     private final ComprasRepository comprasRepository;
 
+
     @Autowired
     public ComprasService(ComprasRepository comprasRepository) {
         this.comprasRepository = comprasRepository;
+    }
+
+    public List<comprasModel> getAllItens() {
+        return comprasRepository.findAll();
     }
 
     public void adicionarItem(comprasModel item) {
@@ -21,7 +28,15 @@ public class ComprasService {
     }
 
     public void removerItem(comprasModel item) {
-        // Lógica para remover o item do banco de dados
+        // Obter o ID do item
+
         comprasRepository.delete(item);
     }
+
+    public void removerItemPorDados(String nome, Double valor, String imageUrl) {
+        comprasRepository.deleteByNomeAndValorAndImageUrl(nome, valor, imageUrl);
+    }
+
+
+
 }

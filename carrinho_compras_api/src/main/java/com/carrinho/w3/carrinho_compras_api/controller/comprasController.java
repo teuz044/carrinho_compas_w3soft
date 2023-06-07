@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin("*")
@@ -16,6 +18,13 @@ public class comprasController {
     public comprasController(ComprasService comprasService) {
         this.comprasService = comprasService;
     }
+
+    @GetMapping("/itens")
+    public ResponseEntity<List<comprasModel>> getAllItens() {
+        List<comprasModel> comprasModel = comprasService.getAllItens();
+        return new ResponseEntity<>(comprasModel, HttpStatus.OK);
+    }
+
     @PostMapping("/adicionaritem")
     public ResponseEntity<String> adicionarItem(@RequestBody comprasModel comprasModel) {
         comprasService.adicionarItem(comprasModel);
@@ -23,9 +32,9 @@ public class comprasController {
         return new ResponseEntity<>(mensagem, HttpStatus.OK);
     }
 
-    @PostMapping("/removeritem")
+    @DeleteMapping("/removeritem")
     public ResponseEntity<String> removerItem(@RequestBody comprasModel comprasModel) {
-        comprasService.removerItem(comprasModel);
+        comprasService.removerItemPorDados(comprasModel.getNome(), comprasModel.getValor(), comprasModel.getImageUrl());
         String mensagem = "Item removido com sucesso";
         return new ResponseEntity<>(mensagem, HttpStatus.OK);
     }
